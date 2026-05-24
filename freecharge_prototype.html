@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreechargeBiz × Axis Bank — Card Recommendation Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0A0F1E;--ink2:#2D3748;--ink3:#64748B;--ink4:#94A3B8;
+  --bg:#F8FAFF;--surface:#FFFFFF;--surface2:#F1F5FD;
+  --axis-red:#E31837;--axis-gold:#C8972B;--axis-navy:#003366;
+  --fc-purple:#6C2BD9;--fc-pink:#E91E8C;
+  --blue:#1A56C4;--blue-lt:#EFF6FF;--blue-mid:#BFDBFE;
+  --green:#059669;--green-lt:#ECFDF5;
+  --amber:#D97706;--amber-lt:#FFFBEB;
+  --radius:12px;--radius-lg:20px;--radius-xl:28px;
+  --shadow:0 4px 24px rgba(26,86,196,0.08);
+  --shadow-lg:0 8px 40px rgba(26,86,196,0.14);
+}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden}
+
+/* SCREEN MANAGEMENT */
+.screen{display:none;min-height:100vh;animation:fadeIn 0.4s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* NAVBAR */
+.nav{background:var(--surface);border-bottom:1px solid #E8EEFF;padding:0 1.5rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-logo{display:flex;align-items:center;gap:8px}
+.nav-logo-fc{font-size:15px;font-weight:700;color:var(--fc-purple);letter-spacing:-0.3px}
+.nav-logo-sep{color:var(--ink4);font-weight:300;margin:0 4px}
+.nav-logo-axis{font-size:15px;font-weight:700;color:var(--axis-navy);letter-spacing:-0.3px}
+.nav-badge{background:var(--blue-lt);color:var(--blue);font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;letter-spacing:0.3px}
+
+/* PROGRESS BAR */
+.progress-wrap{background:var(--surface);padding:0.75rem 1.5rem;border-bottom:1px solid #E8EEFF}
+.progress-steps{display:flex;align-items:center;gap:0;max-width:480px;margin:0 auto}
+.pstep{display:flex;align-items:center;flex:1}
+.pstep-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transition:all 0.3s;flex-shrink:0}
+.pstep-dot.done{background:var(--blue);color:#fff}
+.pstep-dot.active{background:var(--blue);color:#fff;box-shadow:0 0 0 4px var(--blue-mid)}
+.pstep-dot.todo{background:var(--surface2);color:var(--ink4)}
+.pstep-line{flex:1;height:2px;background:var(--surface2);transition:background 0.3s}
+.pstep-line.done{background:var(--blue)}
+.pstep-label{font-size:10px;color:var(--ink3);margin-top:4px;white-space:nowrap}
+.pstep-col{display:flex;flex-direction:column;align-items:center}
+
+/* HERO SCREEN */
+.hero{padding:2rem 1.5rem 1.5rem;max-width:520px;margin:0 auto}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#6C2BD9 0%,#1A56C4 100%);color:#fff;font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;margin-bottom:1.25rem;letter-spacing:0.5px}
+.hero-eyebrow::before{content:'✦';font-size:10px}
+.hero-headline{font-family:'DM Serif Display',serif;font-size:2.2rem;line-height:1.15;color:var(--ink);margin-bottom:0.75rem}
+.hero-headline span{font-style:italic;color:var(--blue)}
+.hero-sub{font-size:14px;line-height:1.7;color:var(--ink2);margin-bottom:1.75rem}
+.hero-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1.75rem}
+.stat-card{background:var(--surface);border:1px solid #E8EEFF;border-radius:var(--radius);padding:0.875rem 1rem;text-align:center}
+.stat-num{font-size:1.5rem;font-weight:700;color:var(--blue);line-height:1}
+.stat-label{font-size:10px;color:var(--ink3);margin-top:4px;line-height:1.4}
+.btn-primary{width:100%;background:linear-gradient(135deg,var(--blue) 0%,#0EA5E9 100%);color:#fff;border:none;border-radius:var(--radius);padding:1rem;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:'Sora',sans-serif;letter-spacing:-0.2px}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+.btn-primary:active{transform:translateY(0)}
+.hero-trust{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:1rem;flex-wrap:wrap}
+.trust-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--ink3)}
+.trust-dot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+
+/* CONSENT SCREEN */
+.consent-wrap{padding:1.5rem;max-width:480px;margin:0 auto}
+.screen-title{font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--ink);margin-bottom:0.5rem;line-height:1.2}
+.screen-sub{font-size:13px;color:var(--ink3);margin-bottom:1.5rem;line-height:1.6}
+.consent-option{background:var(--surface);border:2px solid #E8EEFF;border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:0.875rem;cursor:pointer;transition:all 0.2s;position:relative}
+.consent-option.selected{border-color:var(--blue);background:var(--blue-lt)}
+.consent-option-header{display:flex;align-items:center;gap:12px;margin-bottom:0.5rem}
+.consent-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.consent-icon.sms{background:#FFF0F7}
+.consent-icon.bureau{background:#F0F7FF}
+.consent-option-title{font-size:14px;font-weight:600;color:var(--ink)}
+.consent-option-rec{font-size:10px;color:var(--blue);font-weight:600;background:var(--blue-lt);padding:2px 6px;border-radius:8px;margin-left:auto}
+.consent-option-desc{font-size:12px;color:var(--ink2);line-height:1.6;margin-left:52px}
+.consent-check{position:absolute;top:1.25rem;right:1.25rem;width:20px;height:20px;border-radius:50%;border:2px solid #D1D5DB;transition:all 0.2s}
+.consent-option.selected .consent-check{background:var(--blue);border-color:var(--blue)}
+.consent-option.selected .consent-check::after{content:'✓';color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;height:100%;font-weight:700}
+.skip-link{text-align:center;margin-top:0.75rem;font-size:12px;color:var(--ink3)}
+.skip-link a{color:var(--blue);cursor:pointer;text-decoration:none}
+
+/* QUESTIONNAIRE */
+.quiz-wrap{padding:1.5rem;max-width:480px;margin:0 auto}
+.quiz-progress{display:flex;align-items:center;gap:8px;margin-bottom:1.5rem}
+.quiz-bar-bg{flex:1;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.quiz-bar-fill{height:100%;background:var(--blue);border-radius:2px;transition:width 0.4s ease}
+.quiz-count{font-size:12px;color:var(--ink3);font-weight:500;white-space:nowrap}
+.quiz-q{font-size:1.1rem;font-weight:600;color:var(--ink);margin-bottom:0.25rem;line-height:1.35}
+.quiz-hint{font-size:12px;color:var(--ink3);margin-bottom:1.25rem}
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem}
+.opt-item{background:var(--surface);border:2px solid #E8EEFF;border-radius:var(--radius);padding:0.875rem 0.75rem;cursor:pointer;transition:all 0.2s;text-align:center;position:relative}
+.opt-item:hover{border-color:var(--blue-mid)}
+.opt-item.selected{border-color:var(--blue);background:var(--blue-lt)}
+.opt-item.multi-selected{border-color:var(--blue);background:var(--blue-lt)}
+.opt-emoji{font-size:22px;margin-bottom:6px}
+.opt-label{font-size:12px;font-weight:600;color:var(--ink);line-height:1.3}
+.opt-sub{font-size:10px;color:var(--ink3);margin-top:2px}
+.opt-check{position:absolute;top:6px;right:6px;width:16px;height:16px;border-radius:50%;background:var(--blue);display:none;align-items:center;justify-content:center}
+.opt-item.selected .opt-check,.opt-item.multi-selected .opt-check{display:flex}
+.opt-check::after{content:'✓';color:#fff;font-size:9px;font-weight:700}
+.btn-next{width:100%;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);padding:0.875rem;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:'Sora',sans-serif;opacity:0.4;pointer-events:none}
+.btn-next.enabled{opacity:1;pointer-events:all}
+.btn-next.enabled:hover{background:#1547B0}
+.range-wrap{margin-bottom:1.25rem}
+.range-row{display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);margin-top:8px}
+input[type=range]{width:100%;-webkit-appearance:none;height:5px;border-radius:3px;background:var(--surface2);outline:none;margin-top:8px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--blue);cursor:pointer;border:3px solid #fff;box-shadow:0 0 0 1px var(--blue)}
+
+/* PROCESSING */
+.processing-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:2rem;text-align:center}
+.ai-orb{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--fc-purple),var(--blue));margin-bottom:1.5rem;position:relative;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:0.9}}
+.ai-orb::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px solid transparent;border-top-color:var(--blue);animation:spin 1.5s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.processing-title{font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--ink);margin-bottom:0.5rem}
+.processing-sub{font-size:13px;color:var(--ink3);margin-bottom:2rem;max-width:300px;line-height:1.6}
+.processing-steps{width:100%;max-width:320px}
+.proc-step{display:flex;align-items:center;gap:12px;padding:0.625rem 0;border-bottom:1px solid #F1F5FD;font-size:13px;color:var(--ink2)}
+.proc-step:last-child{border-bottom:none}
+.proc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:all 0.3s}
+.proc-dot.done{background:var(--green)}
+.proc-dot.active{background:var(--blue);animation:pulse 1s ease-in-out infinite}
+.proc-dot.todo{background:var(--surface2)}
+
+/* RECOMMENDATION */
+.rec-wrap{padding:1.5rem;max-width:520px;margin:0 auto}
+.match-hero{background:linear-gradient(135deg,#1E3A5F 0%,#1A56C4 100%);border-radius:var(--radius-xl);padding:1.5rem;margin-bottom:1.25rem;color:#fff;position:relative;overflow:hidden}
+.match-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.05)}
+.match-hero::after{content:'';position:absolute;bottom:-60px;left:-20px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.04)}
+.match-eyebrow{font-size:10px;font-weight:600;letter-spacing:1px;opacity:0.7;text-transform:uppercase;margin-bottom:0.375rem}
+.match-card-name{font-family:'DM Serif Display',serif;font-size:1.5rem;margin-bottom:0.25rem;position:relative;z-index:1}
+.match-card-by{font-size:12px;opacity:0.75;margin-bottom:1rem}
+.match-score-row{display:flex;align-items:center;gap:12px;position:relative;z-index:1}
+.match-score{background:rgba(255,255,255,0.15);border-radius:10px;padding:6px 14px;display:flex;align-items:baseline;gap:4px}
+.match-score-num{font-size:1.5rem;font-weight:700}
+.match-score-label{font-size:11px;opacity:0.8}
+.match-badge{background:rgba(16,185,129,0.25);border:1px solid rgba(16,185,129,0.5);color:#34D399;font-size:11px;font-weight:600;padding:5px 10px;border-radius:20px}
+.why-section{background:var(--surface);border:1px solid #E8EEFF;border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1rem}
+.why-title{font-size:12px;font-weight:700;letter-spacing:0.5px;color:var(--ink3);text-transform:uppercase;margin-bottom:1rem}
+.why-item{display:flex;align-items:flex-start;gap:12px;margin-bottom:0.875rem}
+.why-item:last-child{margin-bottom:0}
+.why-icon-wrap{width:36px;height:36px;border-radius:10px;background:var(--blue-lt);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.why-text-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.why-text-sub{font-size:12px;color:var(--ink2);line-height:1.5}
+.why-text-highlight{color:var(--blue);font-weight:600}
+.benefits-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
+.benefit-card{background:var(--surface2);border-radius:var(--radius);padding:0.875rem}
+.benefit-label{font-size:10px;font-weight:600;color:var(--ink3);letter-spacing:0.3px;text-transform:uppercase;margin-bottom:4px}
+.benefit-value{font-size:1rem;font-weight:700;color:var(--ink)}
+.benefit-sub{font-size:11px;color:var(--ink3);margin-top:2px}
+.cta-section{background:linear-gradient(135deg,#ECFDF5 0%,#EFF6FF 100%);border:1px solid #BFDBFE;border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1rem}
+.cta-note{font-size:12px;color:var(--ink2);margin-bottom:0.875rem;line-height:1.6}
+.cta-row{display:flex;gap:10px}
+.btn-apply{flex:2;background:linear-gradient(135deg,var(--blue),#0EA5E9);color:#fff;border:none;border-radius:var(--radius);padding:0.875rem;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s}
+.btn-apply:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+.btn-alt{flex:1;background:transparent;color:var(--blue);border:2px solid var(--blue-mid);border-radius:var(--radius);padding:0.875rem;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s}
+.btn-alt:hover{background:var(--blue-lt)}
+.alt-cards-section{margin-bottom:1.5rem}
+.alt-title{font-size:12px;font-weight:700;color:var(--ink3);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:0.75rem}
+.alt-card{background:var(--surface);border:1px solid #E8EEFF;border-radius:var(--radius);padding:0.875rem 1rem;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer;transition:all 0.2s}
+.alt-card:hover{border-color:var(--blue-mid);box-shadow:var(--shadow)}
+.alt-card-icon{width:40px;height:40px;background:var(--surface2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.alt-card-name{font-size:13px;font-weight:600;color:var(--ink)}
+.alt-card-type{font-size:11px;color:var(--ink3);margin-top:1px}
+.alt-card-match{margin-left:auto;font-size:12px;font-weight:600;color:var(--blue)}
+
+/* AXIS CARD VISUAL */
+.card-visual{width:100%;max-width:300px;aspect-ratio:1.586;background:linear-gradient(135deg,#0A0F1E 0%,#1E3A5F 50%,#003366 100%);border-radius:16px;padding:1.25rem;position:relative;overflow:hidden;margin:1rem auto;box-shadow:0 12px 40px rgba(10,15,30,0.4)}
+.card-visual::before{content:'';position:absolute;top:-30px;right:-30px;width:160px;height:160px;border-radius:50%;background:rgba(200,151,43,0.12)}
+.card-visual::after{content:'';position:absolute;bottom:-50px;left:-20px;width:200px;height:200px;border-radius:50%;background:rgba(26,86,196,0.15)}
+.card-chip{width:32px;height:24px;background:linear-gradient(135deg,var(--axis-gold) 0%,#F0C869 100%);border-radius:5px;margin-bottom:auto;position:relative;z-index:1}
+.card-brand{position:absolute;top:1.25rem;right:1.25rem;font-size:11px;font-weight:700;color:rgba(255,255,255,0.9);letter-spacing:1px;z-index:1}
+.card-number{font-size:12px;letter-spacing:3px;color:rgba(255,255,255,0.6);margin-top:1.5rem;position:relative;z-index:1}
+.card-bottom{display:flex;justify-content:space-between;align-items:flex-end;margin-top:0.75rem;position:relative;z-index:1}
+.card-name-label{font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:2px}
+.card-holder-name{font-size:12px;font-weight:600;color:rgba(255,255,255,0.9);letter-spacing:0.5px}
+.card-logo-area{text-align:right}
+.card-logo-text{font-size:14px;font-weight:700;color:var(--axis-gold);letter-spacing:-0.3px}
+
+/* SPEND BREAKDOWN */
+.spend-bars{margin:0.75rem 0}
+.spend-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.spend-cat{font-size:11px;color:var(--ink2);width:80px;flex-shrink:0}
+.spend-bar-bg{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.spend-bar-fill{height:100%;border-radius:3px;transition:width 1s ease;width:0}
+.spend-amt{font-size:11px;color:var(--ink3);width:55px;text-align:right;flex-shrink:0}
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">
+    <span class="nav-logo-fc">freecharge</span>
+    <span class="nav-logo-sep">×</span>
+    <span class="nav-logo-axis">AXIS BANK</span>
+  </div>
+  <span class="nav-badge" id="navBadge">Card Finder</span>
+</nav>
+
+<!-- PROGRESS (hidden on screen 0) -->
+<div class="progress-wrap" id="progressWrap" style="display:none">
+  <div class="progress-steps">
+    <div class="pstep">
+      <div class="pstep-col">
+        <div class="pstep-dot" id="ps1">1</div>
+        <div class="pstep-label">Consent</div>
+      </div>
+      <div class="pstep-line" id="pl1"></div>
+    </div>
+    <div class="pstep">
+      <div class="pstep-col">
+        <div class="pstep-dot todo" id="ps2">2</div>
+        <div class="pstep-label">Profile</div>
+      </div>
+      <div class="pstep-line" id="pl2"></div>
+    </div>
+    <div class="pstep">
+      <div class="pstep-col">
+        <div class="pstep-dot todo" id="ps3">3</div>
+        <div class="pstep-label">Lifestyle</div>
+      </div>
+      <div class="pstep-line" id="pl3"></div>
+    </div>
+    <div class="pstep">
+      <div class="pstep-col">
+        <div class="pstep-dot todo" id="ps4">4</div>
+        <div class="pstep-label">Match</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 0: HERO ===== -->
+<div class="screen active" id="s0">
+  <div class="hero">
+    <div class="hero-eyebrow">AI-Powered Card Match</div>
+    <h1 class="hero-headline">Your perfect card,<br><span>in 90 seconds.</span></h1>
+    <p class="hero-sub">Stop scrolling through 40 cards that weren't built for you. We analyse your spend patterns and match you to the Axis Bank card that actually rewards how you live.</p>
+    <div class="hero-stats">
+      <div class="stat-card">
+        <div class="stat-num">94%</div>
+        <div class="stat-label">match accuracy</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">90s</div>
+        <div class="stat-label">avg. time to match</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">8</div>
+        <div class="stat-label">Axis cards profiled</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="goTo(1)">Find My Perfect Card →</button>
+    <div class="hero-trust">
+      <div class="trust-item"><span class="trust-dot"></span> RBI-compliant</div>
+      <div class="trust-item"><span class="trust-dot"></span> On-device SMS parsing</div>
+      <div class="trust-item"><span class="trust-dot"></span> Zero data sold</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 1: CONSENT ===== -->
+<div class="screen" id="s1">
+  <div class="consent-wrap">
+    <h2 class="screen-title">Let's personalise<br>your recommendation</h2>
+    <p class="screen-sub">Share a little more and we'll match you with extraordinary accuracy. Choose what you're comfortable with.</p>
+
+    <div class="consent-option" id="co-sms" onclick="toggleConsent('sms')">
+      <div class="consent-option-header">
+        <div class="consent-icon sms">📱</div>
+        <div class="consent-option-title">Analyse my SMS transactions</div>
+        <span class="consent-option-rec">Recommended</span>
+      </div>
+      <div class="consent-option-desc">We read merchant names & amounts from your last 90 days of bank/payment SMS — nothing else. Raw SMS never leaves your phone.</div>
+      <div class="consent-check" id="cc-sms"></div>
+    </div>
+
+    <div class="consent-option" id="co-bureau" onclick="toggleConsent('bureau')">
+      <div class="consent-option-header">
+        <div class="consent-icon bureau">📊</div>
+        <div class="consent-option-title">Soft bureau check (CIBIL)</div>
+      </div>
+      <div class="consent-option-desc">A soft pull that won't affect your score. Helps us show only cards you're likely to be approved for, avoiding hard inquiry on poor matches.</div>
+      <div class="consent-check" id="cc-bureau"></div>
+    </div>
+
+    <button class="btn-next enabled" style="margin-top:1.25rem" onclick="goTo(2)">Continue →</button>
+    <div class="skip-link">Prefer not to share? <a onclick="goTo(2)">Skip and answer questions manually</a></div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 2: QUIZ – income & city ===== -->
+<div class="screen" id="s2">
+  <div class="quiz-wrap">
+    <div class="quiz-progress">
+      <div class="quiz-bar-bg"><div class="quiz-bar-fill" style="width:33%"></div></div>
+      <span class="quiz-count">1 of 3</span>
+    </div>
+    <div class="quiz-q">What's your annual income?</div>
+    <div class="quiz-hint">Used only to match eligible cards. We don't verify this now.</div>
+    <div class="opt-grid" id="incomeOpts">
+      <div class="opt-item" onclick="selectSingle(this,'income')">
+        <div class="opt-emoji">🌱</div>
+        <div class="opt-label">Under ₹3L</div>
+        <div class="opt-sub">Student / Entry-level</div>
+        <div class="opt-check"></div>
+      </div>
+      <div class="opt-item" onclick="selectSingle(this,'income')">
+        <div class="opt-emoji">🏢</div>
+        <div class="opt-label">₹3L – ₹6L</div>
+        <div class="opt-sub">Junior professional</div>
+        <div class="opt-check"></div>
+      </div>
+      <div class="opt-item" onclick="selectSingle(this,'income')">
+        <div class="opt-emoji">💼</div>
+        <div class="opt-label">₹6L – ₹15L</div>
+        <div class="opt-sub">Mid-career</div>
+        <div class="opt-check"></div>
+      </div>
+      <div class="opt-item" onclick="selectSingle(this,'income')">
+        <div class="opt-emoji">🏆</div>
+        <div class="opt-label">Above ₹15L</div>
+        <div class="opt-sub">Senior / Business owner</div>
+        <div class="opt-check"></div>
+      </div>
+    </div>
+    <button class="btn-next" id="btn-q1" onclick="goTo(3)">Next →</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN 3: QUIZ – spend categories ===== -->
+<div class="screen" id="s3">
+  <div class="quiz-wrap">
+    <div class="quiz-progress">
+      <div class="quiz-bar-bg"><div class="quiz-bar-fill" style="width:66%"></div></div>
+      <span class="quiz-count">2 of 3</span>
+    </div>
+    <div class="quiz-q">Where do you spend the most?</div>
+    <div class="quiz-hint">Pick up to 3 categories that best describe you.</div>
+    <div class="opt-grid" id="spendOpts">
+      <div class="opt-item" onclick="toggleMulti(this,'spend',3)" data-val="food">
+        <div class="opt-emoji">🍕</div>
+        <div class="opt-label">Food & Dining</div>
+        <div class="opt-sub">Zomato, Swiggy, restaurants</div>
+        <div class="opt-check"></div>
+      </div>
+      <div class="opt-item" onclick="toggleMulti(this,'spend',3)" data-val="travel">
+        <div class="opt-emoji">✈️</div>
+        <div class="opt-label">Travel</div>
+        <div class="opt-sub">Flights, hotels, taxis</div>
+        <div class="opt-check"></div>
+      </div>
+      <div class="opt-item" onclick="toggleMulti(this,'spend',3)" data-val="shopping">
+        <div class="opt-emoji">🛒</div>
+        <div class="opt-label">Shopping</div>
+        <div class="opt-sub">Amazon, Flipkart, fashion</div>
+        <div class="opt-check"></div>
+      </div>
+      <div class="opt-item" onclick="toggleMulti(this,'spend',3)" data-val="fuel">
+        <div class="opt-emoji">⛽</div>
+        <div class="opt-label">Fuel</div>
+        <div class="opt-sub">Petrol, EV charging</div>
+        <div class="opt-check"></div>
+      </div>
+      <div class="opt-item" onclick="toggleMulti(this,'spend',3)" data-val="entertainment">
+        <div class="opt-emoji">🎬</div>
+        <div class="opt-label">Entertainment</div>
+        <div class="opt-sub">OTT, movies, gaming</div>
+        <div class="opt-check"></div>
+      </div>
+      <div class="opt-item" onclick="toggleMulti(this,'spend',3)" data-val="utilities">
+        <div class="opt-emoji">💡</div>
+        <div class="opt-label">Bills & Utilities</div>
+        <div class="opt-sub">Electricity, phone, rent</div>
+        <div class="opt-check"></div>
+      </div>
+    </div>
+    <button class="btn-next" id="btn-q2" onclick="goTo(4)">Next →</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN 4: QUIZ – fee preference ===== -->
+<div class="screen" id="s4">
+  <div class="quiz-wrap">
+    <div class="quiz-progress">
+      <div class="quiz-bar-bg"><div class="quiz-bar-fill" style="width:100%"></div></div>
+      <span class="quiz-count">3 of 3</span>
+    </div>
+    <div class="quiz-q">Annual fee preference?</div>
+    <div class="quiz-hint">Premium cards often give back 3–5× their fee in rewards.</div>
+    <div class="opt-grid" id="feeOpts" style="grid-template-columns:1fr">
+      <div class="opt-item" style="display:flex;align-items:center;text-align:left;gap:14px" onclick="selectSingle(this,'fee')">
+        <div class="opt-emoji">🆓</div>
+        <div>
+          <div class="opt-label">No annual fee only</div>
+          <div class="opt-sub">Keep it free, always</div>
+        </div>
+        <div class="opt-check" style="position:absolute;right:1rem"></div>
+      </div>
+      <div class="opt-item" style="display:flex;align-items:center;text-align:left;gap:14px" onclick="selectSingle(this,'fee')">
+        <div class="opt-emoji">💳</div>
+        <div>
+          <div class="opt-label">Up to ₹1,500/year</div>
+          <div class="opt-sub">Happy to pay if rewards outweigh it</div>
+        </div>
+        <div class="opt-check" style="position:absolute;right:1rem"></div>
+      </div>
+      <div class="opt-item" style="display:flex;align-items:center;text-align:left;gap:14px" onclick="selectSingle(this,'fee')">
+        <div class="opt-emoji">👑</div>
+        <div>
+          <div class="opt-label">Premium (₹1,500+)</div>
+          <div class="opt-sub">Lounge access, miles, big cashback — worth the fee</div>
+        </div>
+        <div class="opt-check" style="position:absolute;right:1rem"></div>
+      </div>
+    </div>
+    <button class="btn-next" id="btn-q3" onclick="startProcessing()">Find My Match →</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN 5: PROCESSING ===== -->
+<div class="screen" id="s5">
+  <div class="processing-wrap">
+    <div class="ai-orb"></div>
+    <h2 class="processing-title">Analysing your profile…</h2>
+    <p class="processing-sub">Our engine is cross-referencing 340+ data points across 8 Axis Bank cards.</p>
+    <div class="processing-steps">
+      <div class="proc-step"><div class="proc-dot active" id="pd1"></div><span id="pt1">Parsing spend patterns from SMS</span></div>
+      <div class="proc-step"><div class="proc-dot todo" id="pd2"></div><span id="pt2">Checking eligibility signals</span></div>
+      <div class="proc-step"><div class="proc-dot todo" id="pd3"></div><span id="pt3">Scoring lifestyle fit across 8 cards</span></div>
+      <div class="proc-step"><div class="proc-dot todo" id="pd4"></div><span id="pt4">Personalising your recommendation</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 6: RECOMMENDATION ===== -->
+<div class="screen" id="s6">
+  <div class="rec-wrap">
+    <!-- Card Visual -->
+    <div class="card-visual">
+      <div class="card-brand">AXIS BANK</div>
+      <div class="card-chip"></div>
+      <div class="card-number">•••• •••• •••• 4291</div>
+      <div class="card-bottom">
+        <div>
+          <div class="card-name-label">Card Holder</div>
+          <div class="card-holder-name">YOUR NAME</div>
+        </div>
+        <div class="card-logo-area">
+          <div class="card-logo-text">ATLAS</div>
+          <div style="font-size:9px;color:rgba(200,151,43,0.7);letter-spacing:0.5px">CREDIT CARD</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Match Banner -->
+    <div class="match-hero">
+      <div class="match-eyebrow">Your Perfect Match</div>
+      <div class="match-card-name">Axis Bank Atlas Credit Card</div>
+      <div class="match-card-by">By Axis Bank × Freecharge</div>
+      <div class="match-score-row">
+        <div class="match-score">
+          <span class="match-score-num">94</span>
+          <span class="match-score-label">% match</span>
+        </div>
+        <div class="match-badge">✓ Likely to be approved</div>
+      </div>
+    </div>
+
+    <!-- Why This Card -->
+    <div class="why-section">
+      <div class="why-title">Why this card fits you</div>
+      <div class="why-item">
+        <div class="why-icon-wrap">✈️</div>
+        <div>
+          <div class="why-text-title">Your top spend: Travel (₹7,200/mo)</div>
+          <div class="why-text-sub">Atlas gives you <span class="why-text-highlight">5 EDGE Miles per ₹100</span> on travel bookings — that's ₹4,320 in rewards monthly on your current spend.</div>
+        </div>
+      </div>
+      <div class="why-item">
+        <div class="why-icon-wrap">🍕</div>
+        <div>
+          <div class="why-text-title">Food delivery (₹4,200/mo via SMS)</div>
+          <div class="why-text-sub">Earn <span class="why-text-highlight">2 EDGE Miles per ₹100</span> on dining. Your Zomato/Swiggy habit earns ~₹840/mo in value.</div>
+        </div>
+      </div>
+      <div class="why-item">
+        <div class="why-icon-wrap">🛫</div>
+        <div>
+          <div class="why-text-title">You value lounge access</div>
+          <div class="why-text-sub">Unlimited domestic + 12 international lounge visits/year. Based on your <span class="why-text-highlight">₹18L+ income tier</span>, your ROI on the ₹5,000 fee is 620%.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spend Breakdown from SMS -->
+    <div class="why-section">
+      <div class="why-title">Your SMS spend breakdown (last 90 days)</div>
+      <div class="spend-bars" id="spendBars">
+        <div class="spend-row"><span class="spend-cat">✈️ Travel</span><div class="spend-bar-bg"><div class="spend-bar-fill" data-w="85" style="background:#1A56C4"></div></div><span class="spend-amt">₹7,200</span></div>
+        <div class="spend-row"><span class="spend-cat">🍕 Food</span><div class="spend-bar-bg"><div class="spend-bar-fill" data-w="58" style="background:#0EA5E9"></div></div><span class="spend-amt">₹4,200</span></div>
+        <div class="spend-row"><span class="spend-cat">🛒 Shopping</span><div class="spend-bar-bg"><div class="spend-bar-fill" data-w="42" style="background:#6C2BD9"></div></div><span class="spend-amt">₹3,100</span></div>
+        <div class="spend-row"><span class="spend-cat">⛽ Fuel</span><div class="spend-bar-bg"><div class="spend-bar-fill" data-w="22" style="background:#C8972B"></div></div><span class="spend-amt">₹1,600</span></div>
+        <div class="spend-row"><span class="spend-cat">💡 Bills</span><div class="spend-bar-bg"><div class="spend-bar-fill" data-w="18" style="background:#059669"></div></div><span class="spend-amt">₹1,300</span></div>
+      </div>
+    </div>
+
+    <!-- Key Benefits -->
+    <div class="why-title" style="margin-bottom:0.75rem">Key benefits</div>
+    <div class="benefits-grid">
+      <div class="benefit-card">
+        <div class="benefit-label">Joining fee</div>
+        <div class="benefit-value">₹5,000</div>
+        <div class="benefit-sub">Waived on ₹5L spend</div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-label">Travel rewards</div>
+        <div class="benefit-value">5x Miles</div>
+        <div class="benefit-sub">Per ₹100 on travel</div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-label">Lounge access</div>
+        <div class="benefit-value">Unlimited</div>
+        <div class="benefit-sub">Domestic + 12 intl/yr</div>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-label">Yearly savings</div>
+        <div class="benefit-value">₹62,400</div>
+        <div class="benefit-sub">Based on your SMS data</div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-section">
+      <div class="cta-note">✓ Your data is pre-filled. The application takes under 4 minutes. This is a soft check — your CIBIL score won't be affected until final submission.</div>
+      <div class="cta-row">
+        <button class="btn-apply" onclick="alert('Redirecting to Axis Bank application flow...')">Apply Now — Pre-filled →</button>
+        <button class="btn-alt" onclick="showAlt()">See others</button>
+      </div>
+    </div>
+
+    <!-- Alternative Cards -->
+    <div class="alt-cards-section" id="altSection" style="display:none">
+      <div class="alt-title">Also consider</div>
+      <div class="alt-card">
+        <div class="alt-card-icon">🏨</div>
+        <div>
+          <div class="alt-card-name">Axis Bank Vistara Signature</div>
+          <div class="alt-card-type">Travel + Airline Miles</div>
+        </div>
+        <div class="alt-card-match">87%</div>
+      </div>
+      <div class="alt-card">
+        <div class="alt-card-icon">💸</div>
+        <div>
+          <div class="alt-card-name">Freecharge Plus Credit Card</div>
+          <div class="alt-card-type">Cashback · No fee</div>
+        </div>
+        <div class="alt-card-match">79%</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const userData = { consent:{sms:false,bureau:false}, income:'', spend:[], fee:'' };
+let currentScreen = 0;
+
+function goTo(n) {
+  document.getElementById('s'+currentScreen).classList.remove('active');
+  document.getElementById('s'+n).classList.add('active');
+  currentScreen = n;
+  updateProgress(n);
+  window.scrollTo(0,0);
+}
+
+function updateProgress(n) {
+  const wrap = document.getElementById('progressWrap');
+  if(n === 0) { wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  const steps = [null,1,2,3,4];
+  [1,2,3,4].forEach(i => {
+    const dot = document.getElementById('ps'+i);
+    const line = document.getElementById('pl'+i);
+    if(n > i) { dot.className='pstep-dot done'; dot.innerHTML='✓'; if(line) line.className='pstep-line done'; }
+    else if(n === i) { dot.className='pstep-dot active'; dot.innerHTML=i; if(line) line.className='pstep-line'; }
+    else { dot.className='pstep-dot todo'; dot.innerHTML=i; if(line) line.className='pstep-line'; }
+  });
+  const labels=['','Consent','Profile','Lifestyle','Match'];
+  document.getElementById('navBadge').textContent = labels[Math.min(n,4)] || 'Match';
+}
+
+function toggleConsent(type) {
+  userData.consent[type] = !userData.consent[type];
+  const el = document.getElementById('co-'+type);
+  el.classList.toggle('selected', userData.consent[type]);
+}
+
+function selectSingle(el, group) {
+  document.querySelectorAll('#'+group+'Opts .opt-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  userData[group] = el.querySelector('.opt-label').textContent;
+  const btn = {income:'btn-q1',fee:'btn-q3'}[group];
+  if(btn) document.getElementById(btn).classList.add('enabled');
+}
+
+function toggleMulti(el, group, max) {
+  const selected = document.querySelectorAll('#'+group+'Opts .opt-item.multi-selected');
+  if(el.classList.contains('multi-selected')) {
+    el.classList.remove('multi-selected');
+    userData.spend = userData.spend.filter(v => v !== el.dataset.val);
+  } else {
+    if(selected.length >= max) return;
+    el.classList.add('multi-selected');
+    userData.spend.push(el.dataset.val);
+  }
+  const btn = document.getElementById('btn-q2');
+  if(userData.spend.length > 0) btn.classList.add('enabled');
+  else btn.classList.remove('enabled');
+}
+
+function startProcessing() {
+  goTo(5);
+  const steps = [
+    {dot:'pd1',txt:'pt1',label:'Parsing spend patterns from SMS'},
+    {dot:'pd2',txt:'pt2',label:'Checking eligibility signals'},
+    {dot:'pd3',txt:'pt3',label:'Scoring lifestyle fit across 8 cards'},
+    {dot:'pd4',txt:'pt4',label:'Personalising your recommendation'},
+  ];
+  let i = 0;
+  function tick() {
+    if(i > 0) { document.getElementById(steps[i-1].dot).className='proc-dot done'; }
+    if(i < steps.length) {
+      document.getElementById(steps[i].dot).className='proc-dot active';
+      i++;
+      setTimeout(tick, 900);
+    } else {
+      setTimeout(() => { goTo(6); animateBars(); }, 500);
+    }
+  }
+  tick();
+}
+
+function animateBars() {
+  setTimeout(() => {
+    document.querySelectorAll('.spend-bar-fill').forEach(bar => {
+      bar.style.width = bar.dataset.w + '%';
+    });
+  }, 300);
+}
+
+function showAlt() {
+  const s = document.getElementById('altSection');
+  s.style.display = s.style.display==='none' ? 'block' : 'none';
+}
+
+updateProgress(0);
+</script>
+</body>
+</html>
